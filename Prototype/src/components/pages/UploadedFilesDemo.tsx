@@ -1,0 +1,1 @@
+// This demo file has been removed as the functionality is now integrated directly into NotionSlidePanel

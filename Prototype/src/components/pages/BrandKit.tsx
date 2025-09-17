@@ -1,0 +1,1 @@
+// This file is no longer needed as Brand Kit is now a tab in ImportantInfo.tsx

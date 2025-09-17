@@ -1,0 +1,10 @@
+Ищу место в файле KanbanBoard.tsx где происходит отображение приоритета.
+
+Скорее всего это в нижней части карточки project card компонента DraggableProjectCard.
+
+Нужно найти:
+1. {displaySettings.showPriority && (
+2. <Flame 
+3. stopPropagation
+
+И заменить на Badge с событием onClick с stopPropagation.

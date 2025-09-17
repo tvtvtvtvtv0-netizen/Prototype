@@ -1,0 +1,14 @@
+Нужно найти в файле KanbanBoard.tsx где используется:
+1. displaySettings.showPriority
+2. <Flame 
+3. getPriorityFlameColor
+
+И заменить на Badge компонент с яркими цветами
+
+Поиск строк в файле:
+- строка с "displaySettings.showPriority &&" 
+- строка с Flame иконкой
+- DropdownMenu для изменения приоритета
+- замена на Badge с getPriorityColor и getPriorityShort
+
+Нужно заменить всю секцию приоритета в нижней части карточки.

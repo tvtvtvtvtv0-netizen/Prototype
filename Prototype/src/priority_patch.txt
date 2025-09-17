@@ -1,0 +1,11 @@
+Поиск в KanbanBoard.tsx:
+
+1. Найти строку где используется displaySettings.showPriority
+2. Найти Flame иконку с getPriorityFlameColor
+3. Заменить на Badge с getPriorityColor и getPriorityShort
+
+Нужно найти в компоненте DraggableProjectCard секцию:
+- Bottom row: Comments (left) and Priority (right)
+- где отображается priority как dropdown с flame icon
+
+Заменить на яркий Badge компонент.
