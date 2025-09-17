@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AppSidebar } from './components/AppSidebar';
 import { FilterSidebar } from './components/FilterSidebar';
+import type { ProjectCard } from './components/pages/KanbanBoard';
 import { Dashboard } from './components/pages/Dashboard';
 import { KanbanBoard } from './components/pages/KanbanBoard';
 import { Team } from './components/pages/Team';
@@ -31,11 +32,11 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState('/projects');
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [isFilterMode, setIsFilterMode] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectCard | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState('event-details');
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<ProjectCard[]>([]);
   
   // Filter states (будут переданы в KanbanBoard)
   const [filterStates, setFilterStates] = useState({
@@ -92,7 +93,7 @@ export default function App() {
     setIsFilterMode(false);
   };
 
-  const handleAddProject = (newProject: any) => {
+  const handleAddProject = (newProject: ProjectCard) => {
     setProjects(prev => [...prev, newProject]);
     console.log('New project added:', newProject);
   };

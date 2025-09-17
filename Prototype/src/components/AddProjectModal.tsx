@@ -1,386 +1,711 @@
-import React, { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Eye, EyeOff, Calendar as CalendarIcon, Camera, Video, Plus } from 'lucide-react';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Switch } from './ui/switch';
+import { Badge } from './ui/badge';
+import { CalendarIcon, Camera, Video, Loader2, Plus } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from './ui/utils';
+import { toast } from 'sonner';
+import type { 
+  ProjectModalState, 
+  PhotoCardData, 
+  VideoCardData, 
+  CreateProjectRequest,
+  CreateProjectResponse 
+} from '../types/project';
+import type { ProjectCard } from './pages/KanbanBoard';
 
 interface AddProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddProject: (project: any) => void;
+  onAddProject: (project: ProjectCard) => void;
 }
 
-export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectModalProps) {
-  const [activeTab, setActiveTab] = useState<'photo' | 'video'>('photo');
+// Mock API function - replace with real API call
+const createProjectCard = async (data: CreateProjectRequest): Promise<CreateProjectResponse> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  const [parameterVisibility, setParameterVisibility] = useState({
-    // General Info
-    projectName: true,
-    eventDate: true,
-    clientName: true,
-    clientEmail: true,
-    clientPhone: true,
-    // Brand
-    photoBrand: true,
-    videoBrand: true,
-    // Package & Services
-    package: true,
-    deliverables: true,
-    addOns: true,
-    retouchingLevel: true,
-    musicChoice: true,
-    // Venue & Team
-    venue: true,
-    photographers: true,
-    videographers: true,
-    editors: true,
-    // Deadlines & Budget
-    editorDueDate: true,
-    finalDeliveryDate: true,
-    budget: true,
-    notes: true,
-    // Additional Parameters
-    clientWishes: true,
-    equipment: true,
-    specialRequirements: true,
-    backupPlan: true,
-    weatherPlan: true,
-    revisionRounds: true,
-    postProduction: true,
-    deliveryFormat: true,
-    videoFiles: true,
-    photoFiles: true,
-  });
+  // Simulate occasional failure for testing
+  if (Math.random() < 0.1) {
+    throw new Error('Failed to create project');
+  }
+  
+  return {
+    id: `${data.type}-${Date.now()}`,
+    type: data.type,
+    status: data.status,
+    projectName: data.projectName,
+    eventDate: data.eventDate,
+    createdAt: new Date(),
+    createdBy: 'Current User'
+  };
+};
 
-  const [formData, setFormData] = useState({
-    projectName: 'Molly & Cooper Wedding',
-    eventDate: '',
+export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectModalProps) {
+  const [state, setState] = useState<ProjectModalState>({
+    projectName: '',
+    eventDate: null,
     clientName: '',
     clientEmail: '',
     clientPhone: '',
-    photoBrand: '',
-    videoBrand: '',
-    package: '',
-    deliverables: [] as string[],
-    addOns: [] as string[],
-    retouchingLevel: '',
-    musicChoice: '',
-    venue: '',
-    photographers: [] as string[],
-    videographers: [] as string[],
-    editors: [] as string[],
-    editorDueDate: '',
-    finalDeliveryDate: '',
-    budget: '',
-    notes: '',
-    clientWishes: '',
-    equipment: '',
-    specialRequirements: '',
-    backupPlan: '',
-    weatherPlan: '',
-    revisionRounds: '',
-    postProduction: '',
-    deliveryFormat: '',
-    videoFiles: false,
-    photoFiles: false,
+    isGeneralValid: false,
+    isCreatingPhoto: false,
+    isCreatingVideo: false,
+    photoCreated: false,
+    videoCreated: false,
+    activeTab: null
   });
 
-  const toggleParameterVisibility = (param: keyof typeof parameterVisibility) => {
-    setParameterVisibility(prev => ({
-      ...prev,
-      [param]: !prev[param]
-    }));
-  };
+  const [photoData, setPhotoData] = useState<PhotoCardData>({
+    photoStatus: 'Uploading',
+    rawDelivery: false,
+    deliverables: [],
+    assignedPhotographers: [],
+    assignedEditors: []
+  });
 
-  // Static data for dropdowns
-  const brands = ['Luxury Wedding Co.', 'Modern Events', 'Classic Celebrations', 'Elegant Affairs'];
-  const packages = ['Basic Package', 'Premium Package', 'Luxury Package', 'Custom Package'];
-  const deliverables = ['Raw Footage', 'Edited Video', 'Highlights Reel', 'Full Documentary', 'Social Media Clips'];
-  const addOns = ['Drone Footage', 'Same Day Edit', 'Photo Slideshow', 'Live Streaming', 'Additional Cameras'];
-  const retouchingLevels = ['Basic', 'Advanced', 'Skin Retouch', 'Full Editorial'];
-  const musicChoices = ['Provided by Client', 'Editor\'s Choice'];
-  const venues = ['Beach Resort', 'Mountain Lodge', 'City Hall', 'Garden Venue', 'Historic Mansion'];
-  
-  const photographers = [
-    { id: 'MG', name: 'Maria Garcia', avatar: 'MG' },
-    { id: 'JW', name: 'James Wilson', avatar: 'JW' },
-    { id: 'ST', name: 'Sarah Thompson', avatar: 'ST' },
-    { id: 'AC', name: 'Alex Chen', avatar: 'AC' }
-  ];
-  
-  const videographers = [
-    { id: 'ED', name: 'Emma Davis', avatar: 'ED' },
-    { id: 'OS', name: 'Oliver Smith', avatar: 'OS' },
-    { id: 'LW', name: 'Lisa Wang', avatar: 'LW' }
-  ];
-  
-  const editors = [
-    { id: 'SC', name: 'Sarah Chen', avatar: 'SC' },
-    { id: 'OS', name: 'Oliver Smith', avatar: 'OS' }
-  ];
+  const [videoData, setVideoData] = useState<VideoCardData>({
+    videoStatus: 'Editing',
+    multiCamSetup: false,
+    audioSources: [],
+    deliverables: [],
+    assignedVideographers: [],
+    assignedEditors: []
+  });
 
-  const handleCreateProject = (type: 'photo' | 'video') => {
-    // Check if required fields are filled
-    if (!formData.projectName.trim() || !formData.eventDate) {
-      return; // Don't create if required fields are empty
+  // Validate general info whenever relevant fields change
+  useEffect(() => {
+    const isValid = !!state.projectName.trim() && !!state.eventDate;
+    setState(prev => ({ ...prev, isGeneralValid: isValid }));
+  }, [state.projectName, state.eventDate]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setState({
+        projectName: '',
+        eventDate: null,
+        clientName: '',
+        clientEmail: '',
+        clientPhone: '',
+        isGeneralValid: false,
+        isCreatingPhoto: false,
+        isCreatingVideo: false,
+        photoCreated: false,
+        videoCreated: false,
+        activeTab: null
+      });
+      setPhotoData({
+        photoStatus: 'Uploading',
+        rawDelivery: false,
+        deliverables: [],
+        assignedPhotographers: [],
+        assignedEditors: []
+      });
+      setVideoData({
+        videoStatus: 'Editing',
+        multiCamSetup: false,
+        audioSources: [],
+        deliverables: [],
+        assignedVideographers: [],
+        assignedEditors: []
+      });
     }
+  }, [isOpen]);
 
-    const baseProject = {
-      title: formData.projectName,
-      client: formData.clientName,
-      date: formData.eventDate,
-      clientEmail: formData.clientEmail,
-      clientPhone: formData.clientPhone,
-      budget: formData.budget,
-      status: 'Scheduled',
-      notes: formData.notes
-    };
+  const handleCreatePhoto = async () => {
+    if (!state.isGeneralValid || state.isCreatingPhoto) return;
 
-    if (type === 'photo') {
-      const photoProject = {
-        ...baseProject,
-        id: `photo-${Date.now()}`,
+    setState(prev => ({ ...prev, isCreatingPhoto: true }));
+    
+    try {
+      const response = await createProjectCard({
+        type: 'photo',
+        status: 'Scheduled',
+        projectName: state.projectName,
+        eventDate: state.eventDate!,
+        clientName: state.clientName,
+        clientEmail: state.clientEmail,
+        clientPhone: state.clientPhone
+      });
+
+      // Create kanban card
+      const newProject: ProjectCard = {
+        id: response.id,
+        title: state.projectName,
         type: 'Photo',
-        brand: formData.photoBrand,
-        package: formData.package,
-        deliverables: formData.deliverables,
-        addOns: formData.addOns,
-        photographers: formData.photographers,
-        editors: formData.editors,
-        retouchingLevel: formData.retouchingLevel,
-        equipment: formData.equipment,
-        specialRequirements: formData.specialRequirements,
-        backupPlan: formData.backupPlan,
-        weatherPlan: formData.weatherPlan,
-        revisionRounds: formData.revisionRounds,
-        photoFiles: formData.photoFiles
+        priority: 'medium',
+        status: 'scheduled',
+        eventDate: state.eventDate!,
+        clientName: state.clientName,
+        clientEmail: state.clientEmail,
+        clientPhone: state.clientPhone,
+        createdAt: response.createdAt,
+        createdBy: response.createdBy
       };
-      onAddProject(photoProject);
-    } else if (type === 'video') {
-      const videoProject = {
-        ...baseProject,
-        id: `video-${Date.now()}`,
-        type: 'Video',
-        brand: formData.videoBrand,
-        package: formData.package,
-        deliverables: formData.deliverables,
-        addOns: formData.addOns,
-        videographers: formData.videographers,
-        editors: formData.editors,
-        musicChoice: formData.musicChoice,
-        postProduction: formData.postProduction,
-        deliveryFormat: formData.deliveryFormat,
-        videoFiles: formData.videoFiles
-      };
-      onAddProject(videoProject);
+
+      onAddProject(newProject);
+
+      setState(prev => ({
+        ...prev,
+        photoId: response.id,
+        photoCreated: true,
+        activeTab: 'photo'
+      }));
+
+      toast.success('Photo project created successfully!');
+    } catch (error) {
+      toast.error('Couldn\'t create photo project, try again');
+      console.error('Failed to create photo project:', error);
+    } finally {
+      setState(prev => ({ ...prev, isCreatingPhoto: false }));
     }
-
-    // Close modal after creating project
-    onClose();
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleCreateVideo = async () => {
+    if (!state.isGeneralValid || state.isCreatingVideo) return;
+
+    setState(prev => ({ ...prev, isCreatingVideo: true }));
+    
+    try {
+      const response = await createProjectCard({
+        type: 'video',
+        status: 'Scheduled',
+        projectName: state.projectName,
+        eventDate: state.eventDate!,
+        clientName: state.clientName,
+        clientEmail: state.clientEmail,
+        clientPhone: state.clientPhone
+      });
+
+      // Create kanban card
+      const newProject: ProjectCard = {
+        id: response.id,
+        title: state.projectName,
+        type: 'Video',
+        priority: 'medium',
+        status: 'scheduled',
+        eventDate: state.eventDate!,
+        clientName: state.clientName,
+        clientEmail: state.clientEmail,
+        clientPhone: state.clientPhone,
+        createdAt: response.createdAt,
+        createdBy: response.createdBy
+      };
+
+      onAddProject(newProject);
+
+      setState(prev => ({
+        ...prev,
+        videoId: response.id,
+        videoCreated: true,
+        activeTab: prev.activeTab ?? 'video'
+      }));
+
+      toast.success('Video project created successfully!');
+    } catch (error) {
+      toast.error('Couldn\'t create video project, try again');
+      console.error('Failed to create video project:', error);
+    } finally {
+      setState(prev => ({ ...prev, isCreatingVideo: false }));
+    }
   };
 
-  const handleMultiSelect = (field: string, value: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: checked 
-        ? [...(prev[field as keyof typeof prev] as string[]), value]
-        : (prev[field as keyof typeof prev] as string[]).filter(item => item !== value)
-    }));
-  };
+  const renderGeneralInfo = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="projectName">Project Name *</Label>
+          <Input
+            id="projectName"
+            value={state.projectName}
+            onChange={(e) => setState(prev => ({ ...prev, projectName: e.target.value }))}
+            placeholder="Enter project name"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Event Date *</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !state.eventDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {state.eventDate ? format(state.eventDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={state.eventDate}
+                onSelect={(date) => setState(prev => ({ ...prev, eventDate: date || null }))}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
-  const isRequiredFieldsFilled = formData.projectName.trim() && formData.eventDate;
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Client Information</h3>
+        
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="clientName">Client Name</Label>
+            <Input
+              id="clientName"
+              value={state.clientName}
+              onChange={(e) => setState(prev => ({ ...prev, clientName: e.target.value }))}
+              placeholder="Client full name"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientEmail">Email</Label>
+              <Input
+                id="clientEmail"
+                type="email"
+                value={state.clientEmail}
+                onChange={(e) => setState(prev => ({ ...prev, clientEmail: e.target.value }))}
+                placeholder="client@example.com"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="clientPhone">Phone</Label>
+              <Input
+                id="clientPhone"
+                type="tel"
+                value={state.clientPhone}
+                onChange={(e) => setState(prev => ({ ...prev, clientPhone: e.target.value }))}
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-4 pt-4">
+        {!state.photoCreated && (
+          <Button
+            onClick={handleCreatePhoto}
+            disabled={!state.isGeneralValid || state.isCreatingPhoto}
+            className="flex-1"
+          >
+            {state.isCreatingPhoto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Camera className="mr-2 h-4 w-4" />
+            Create Photo Project
+          </Button>
+        )}
+        
+        {!state.videoCreated && (
+          <Button
+            onClick={handleCreateVideo}
+            disabled={!state.isGeneralValid || state.isCreatingVideo}
+            className="flex-1"
+            variant="outline"
+          >
+            {state.isCreatingVideo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Video className="mr-2 h-4 w-4" />
+            Create Video Project
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderPhotoCard = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Photo Status</Label>
+          <Select 
+            value={photoData.photoStatus} 
+            onValueChange={(value: any) => setPhotoData(prev => ({ ...prev, photoStatus: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Uploading">Uploading</SelectItem>
+              <SelectItem value="Editing">Editing</SelectItem>
+              <SelectItem value="Retouching">Retouching</SelectItem>
+              <SelectItem value="Delivered">Delivered</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Retouching Level</Label>
+          <Select 
+            value={photoData.retouchingLevel} 
+            onValueChange={(value: any) => setPhotoData(prev => ({ ...prev, retouchingLevel: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Basic">Basic</SelectItem>
+              <SelectItem value="Standard">Standard</SelectItem>
+              <SelectItem value="Premium">Premium</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Editor Due Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !photoData.editorDueDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {photoData.editorDueDate ? format(photoData.editorDueDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={photoData.editorDueDate}
+                onSelect={(date) => setPhotoData(prev => ({ ...prev, editorDueDate: date }))}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Final Delivery Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !photoData.finalDeliveryDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {photoData.finalDeliveryDate ? format(photoData.finalDeliveryDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={photoData.finalDeliveryDate}
+                onSelect={(date) => setPhotoData(prev => ({ ...prev, finalDeliveryDate: date }))}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Shooting Style</Label>
+          <Input
+            value={photoData.shootingStyle || ''}
+            onChange={(e) => setPhotoData(prev => ({ ...prev, shootingStyle: e.target.value }))}
+            placeholder="e.g. Documentary, Portrait"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Editing Style</Label>
+          <Input
+            value={photoData.editingStyle || ''}
+            onChange={(e) => setPhotoData(prev => ({ ...prev, editingStyle: e.target.value }))}
+            placeholder="e.g. Natural, Cinematic"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="rawDelivery"
+          checked={photoData.rawDelivery}
+          onCheckedChange={(checked) => setPhotoData(prev => ({ ...prev, rawDelivery: checked }))}
+        />
+        <Label htmlFor="rawDelivery">RAW Delivery</Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Notes</Label>
+        <Textarea
+          value={photoData.notes || ''}
+          onChange={(e) => setPhotoData(prev => ({ ...prev, notes: e.target.value }))}
+          placeholder="Additional notes for photo project..."
+          rows={3}
+        />
+      </div>
+    </div>
+  );
+
+  const renderVideoCard = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Video Status</Label>
+          <Select 
+            value={videoData.videoStatus} 
+            onValueChange={(value: any) => setVideoData(prev => ({ ...prev, videoStatus: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Editing">Editing</SelectItem>
+              <SelectItem value="Review">Review</SelectItem>
+              <SelectItem value="Revision">Revision</SelectItem>
+              <SelectItem value="Delivered">Delivered</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Resolution</Label>
+          <Select 
+            value={videoData.resolution} 
+            onValueChange={(value: any) => setVideoData(prev => ({ ...prev, resolution: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select resolution" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1080p">1080p</SelectItem>
+              <SelectItem value="4K">4K</SelectItem>
+              <SelectItem value="8K">8K</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Frame Rate</Label>
+          <Select 
+            value={videoData.frameRate} 
+            onValueChange={(value: any) => setVideoData(prev => ({ ...prev, frameRate: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select frame rate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="24fps">24fps</SelectItem>
+              <SelectItem value="30fps">30fps</SelectItem>
+              <SelectItem value="60fps">60fps</SelectItem>
+              <SelectItem value="120fps">120fps</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Shooting Style</Label>
+          <Input
+            value={videoData.shootingStyle || ''}
+            onChange={(e) => setVideoData(prev => ({ ...prev, shootingStyle: e.target.value }))}
+            placeholder="e.g. Cinematic, Documentary"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Editor Due Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !videoData.editorDueDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {videoData.editorDueDate ? format(videoData.editorDueDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={videoData.editorDueDate}
+                onSelect={(date) => setVideoData(prev => ({ ...prev, editorDueDate: date }))}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Final Delivery Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !videoData.finalDeliveryDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {videoData.finalDeliveryDate ? format(videoData.finalDeliveryDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={videoData.finalDeliveryDate}
+                onSelect={(date) => setVideoData(prev => ({ ...prev, finalDeliveryDate: date }))}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="multiCamSetup"
+            checked={videoData.multiCamSetup}
+            onCheckedChange={(checked) => setVideoData(prev => ({ ...prev, multiCamSetup: checked }))}
+          />
+          <Label htmlFor="multiCamSetup">Multi-Cam Setup</Label>
+        </div>
+
+        {videoData.multiCamSetup && (
+          <div className="space-y-2">
+            <Label>Number of Cameras</Label>
+            <Input
+              type="number"
+              min="2"
+              max="10"
+              value={videoData.multiCamCount || ''}
+              onChange={(e) => setVideoData(prev => ({ ...prev, multiCamCount: parseInt(e.target.value) || undefined }))}
+              placeholder="Enter number of cameras"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Notes</Label>
+        <Textarea
+          value={videoData.notes || ''}
+          onChange={(e) => setVideoData(prev => ({ ...prev, notes: e.target.value }))}
+          placeholder="Additional notes for video project..."
+          rows={3}
+        />
+      </div>
+    </div>
+  );
+
+  const showTabs = state.photoCreated || state.videoCreated;
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="!w-[60vw] !max-w-[60vw] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-xl font-semibold">Create New Project</SheetTitle>
-        </SheetHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Project</DialogTitle>
+        </DialogHeader>
         
-        <form className="space-y-3 p-4">
-          {/* General Info Section */}
-          <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
-            <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-              <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
-              General Info
-            </h3>
+        {!showTabs ? (
+          renderGeneralInfo()
+        ) : (
+          <Tabs value={state.activeTab || undefined} onValueChange={(value) => setState(prev => ({ ...prev, activeTab: value as any }))}>
+            <TabsList className="grid w-full grid-cols-2">
+              {state.photoCreated && (
+                <TabsTrigger value="photo" className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  Photo
+                </TabsTrigger>
+              )}
+              {state.videoCreated && (
+                <TabsTrigger value="video" className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  Video
+                </TabsTrigger>
+              )}
+            </TabsList>
             
-            <div className="space-y-4">
-              {/* Project Name and Event Date */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="projectName" className="text-sm font-medium text-gray-700">
-                    Project Name *
-                  </Label>
-                  <Input
-                    id="projectName"
-                    value={formData.projectName}
-                    onChange={(e) => handleInputChange('projectName', e.target.value)}
-                    placeholder="Enter project name"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="eventDate" className="text-sm font-medium text-gray-700">
-                    Event Date *
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="eventDate"
-                      type="date"
-                      value={formData.eventDate}
-                      onChange={(e) => handleInputChange('eventDate', e.target.value)}
-                      className="pl-10 cursor-pointer"
-                      onClick={() => {
-                        const input = document.getElementById('eventDate') as HTMLInputElement;
-                        if (input) {
-                          input.showPicker();
-                        }
-                      }}
-                    />
-                    <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Client Contact Information */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="clientName" className="text-sm font-medium text-gray-700">
-                      Client Name
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleParameterVisibility('clientName')}
-                      className="h-5 w-5 p-0"
-                    >
-                      {parameterVisibility.clientName ? (
-                        <Eye className="h-3 w-3 text-gray-500" />
-                      ) : (
-                        <EyeOff className="h-3 w-3 text-gray-400" />
-                      )}
-                    </Button>
-                  </div>
-                  <Input
-                    id="clientName"
-                    value={formData.clientName}
-                    onChange={(e) => handleInputChange('clientName', e.target.value)}
-                    placeholder="Enter client name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="clientEmail" className="text-sm font-medium text-gray-700">
-                      Client Email
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleParameterVisibility('clientEmail')}
-                      className="h-5 w-5 p-0"
-                    >
-                      {parameterVisibility.clientEmail ? (
-                        <Eye className="h-3 w-3 text-gray-500" />
-                      ) : (
-                        <EyeOff className="h-3 w-3 text-gray-400" />
-                      )}
-                    </Button>
-                  </div>
-                  <Input
-                    id="clientEmail"
-                    type="email"
-                    value={formData.clientEmail}
-                    onChange={(e) => handleInputChange('clientEmail', e.target.value)}
-                    placeholder="Enter client email"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="clientPhone" className="text-sm font-medium text-gray-700">
-                      Client Phone
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleParameterVisibility('clientPhone')}
-                      className="h-5 w-5 p-0"
-                    >
-                      {parameterVisibility.clientPhone ? (
-                        <Eye className="h-3 w-3 text-gray-500" />
-                      ) : (
-                        <EyeOff className="h-3 w-3 text-gray-400" />
-                      )}
-                    </Button>
-                  </div>
-                  <Input
-                    id="clientPhone"
-                    type="tel"
-                    value={formData.clientPhone}
-                    onChange={(e) => handleInputChange('clientPhone', e.target.value)}
-                    placeholder="Enter client phone"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Project Type Selection */}
-          <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
-            <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-              <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
-              Project Type
-            </h3>
+            {state.photoCreated && (
+              <TabsContent value="photo" className="mt-6">
+                {renderPhotoCard()}
+              </TabsContent>
+            )}
             
-            <div className="flex gap-3 bg-gray-200 p-2 rounded-lg">
-              <button
-                type="button"
-                className="flex-1 py-3 px-4 flex items-center justify-center gap-2 text-sm font-medium transition-all rounded-lg bg-transparent text-gray-600 hover:text-gray-900"
-                onClick={() => handleCreateProject('photo')}
-                disabled={!isRequiredFieldsFilled}
+            {state.videoCreated && (
+              <TabsContent value="video" className="mt-6">
+                {renderVideoCard()}
+              </TabsContent>
+            )}
+          </Tabs>
+        )}
+
+        <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex gap-2">
+            {showTabs && !state.photoCreated && (
+              <Button
+                onClick={handleCreatePhoto}
+                disabled={!state.isGeneralValid || state.isCreatingPhoto}
+                variant="outline"
+                size="sm"
               >
-                <Camera className="h-4 w-4" />
-                Create Photo Project
-              </button>
-              <button
-                type="button"
-                className="flex-1 py-3 px-4 flex items-center justify-center gap-2 text-sm font-medium transition-all rounded-lg bg-transparent text-gray-600 hover:text-gray-900"
-                onClick={() => handleCreateProject('video')}
-                disabled={!isRequiredFieldsFilled}
+                {state.isCreatingPhoto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Camera className="mr-2 h-4 w-4" />
+                Add Photo
+              </Button>
+            )}
+            
+            {showTabs && !state.videoCreated && (
+              <Button
+                onClick={handleCreateVideo}
+                disabled={!state.isGeneralValid || state.isCreatingVideo}
+                variant="outline"
+                size="sm"
               >
-                <Video className="h-4 w-4" />
-                Create Video Project
-              </button>
-            </div>
+                {state.isCreatingVideo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Video className="mr-2 h-4 w-4" />
+                Add Video
+              </Button>
+            )}
           </div>
-
-
-          {/* Action Buttons */}
-          <div className="sticky bottom-0 bg-white pt-6 border-t flex justify-end space-x-3 p-6 -mx-6 -mb-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="px-6"
-            >
-              Cancel
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              {showTabs ? 'Close' : 'Cancel'}
             </Button>
+            {showTabs && (
+              <Button onClick={() => toast.success('Project data saved!')}>
+                Save Changes
+              </Button>
+            )}
           </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -50,10 +50,21 @@
         '@': path.resolve(__dirname, './src'),
       },
     },
-    build: {
-      target: 'esnext',
-      outDir: 'build',
-    },
+  build: {
+    target: 'esnext',
+    outDir: 'build',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog', '@radix-ui/react-dialog'],
+          icons: ['lucide-react'],
+          dnd: ['react-dnd', 'react-dnd-html5-backend'],
+          charts: ['recharts']
+        }
+      }
+    }
+  },
     server: {
       port: 3000,
       open: true,
