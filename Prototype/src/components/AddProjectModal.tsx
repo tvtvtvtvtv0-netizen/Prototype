@@ -629,7 +629,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[800px] sm:w-[960px] max-w-none overflow-y-auto p-0">
+      <SheetContent className="w-[50vw] sm:w-[45vw] max-w-none overflow-y-auto p-0">
         <SheetHeader className="p-6">
           <SheetTitle>Create New Project</SheetTitle>
         </SheetHeader>

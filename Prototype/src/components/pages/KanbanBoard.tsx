@@ -1170,8 +1170,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full flex space-x-6 overflow-x-auto pb-4">
+      <div className="flex-1 min-w-0">
+        <div className="flex space-x-6 overflow-x-auto pb-4">
           {columns.map((column, index) => {
             const filteredProjects = filterProjects(column.projects);
             
