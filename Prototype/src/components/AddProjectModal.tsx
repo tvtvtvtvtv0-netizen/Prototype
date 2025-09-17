@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -130,7 +130,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
     try {
       const response = await createProjectCard({
         type: 'photo',
-        status: 'Scheduled',
+      status: 'Scheduled',
         projectName: state.projectName,
         eventDate: state.eventDate!,
         clientName: state.clientName,
@@ -205,7 +205,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
       onAddProject(newProject);
 
       setState(prev => ({
-        ...prev,
+      ...prev,
         videoId: response.id,
         videoCreated: true,
         activeTab: prev.activeTab ?? 'video'
@@ -223,18 +223,18 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
   const renderGeneralInfo = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+                <div className="space-y-2">
           <Label htmlFor="projectName">Project Name *</Label>
-          <Input
-            id="projectName"
+                  <Input
+                    id="projectName"
             value={state.projectName}
             onChange={(e) => setState(prev => ({ ...prev, projectName: e.target.value }))}
-            placeholder="Enter project name"
+                    placeholder="Enter project name"
             required
-          />
-        </div>
-        
-        <div className="space-y-2">
+                  />
+                </div>
+                
+                <div className="space-y-2">
           <Label>Event Date *</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -258,74 +258,70 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
               />
             </PopoverContent>
           </Popover>
-        </div>
-      </div>
+                </div>
+              </div>
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Client Information</h3>
         
         <div className="space-y-4">
-          <div className="space-y-2">
+                <div className="space-y-2">
             <Label htmlFor="clientName">Client Name</Label>
-            <Input
-              id="clientName"
+                  <Input
+                    id="clientName"
               value={state.clientName}
               onChange={(e) => setState(prev => ({ ...prev, clientName: e.target.value }))}
               placeholder="Client full name"
-            />
-          </div>
-          
+                  />
+                </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+                <div className="space-y-2">
               <Label htmlFor="clientEmail">Email</Label>
-              <Input
-                id="clientEmail"
-                type="email"
+                  <Input
+                    id="clientEmail"
+                    type="email"
                 value={state.clientEmail}
                 onChange={(e) => setState(prev => ({ ...prev, clientEmail: e.target.value }))}
                 placeholder="client@example.com"
-              />
-            </div>
-            
-            <div className="space-y-2">
+                  />
+                </div>
+
+                <div className="space-y-2">
               <Label htmlFor="clientPhone">Phone</Label>
-              <Input
-                id="clientPhone"
-                type="tel"
+                  <Input
+                    id="clientPhone"
+                    type="tel"
                 value={state.clientPhone}
                 onChange={(e) => setState(prev => ({ ...prev, clientPhone: e.target.value }))}
                 placeholder="+1 (555) 123-4567"
-              />
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
       <div className="flex gap-4 pt-4">
-        {!state.photoCreated && (
-          <Button
-            onClick={handleCreatePhoto}
-            disabled={!state.isGeneralValid || state.isCreatingPhoto}
-            className="flex-1"
-          >
-            {state.isCreatingPhoto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <Camera className="mr-2 h-4 w-4" />
-            Create Photo Project
-          </Button>
-        )}
+        <Button
+          onClick={handleCreatePhoto}
+          disabled={!state.isGeneralValid || state.isCreatingPhoto || state.photoCreated}
+          className="flex-1"
+        >
+          {state.isCreatingPhoto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Camera className="mr-2 h-4 w-4" />
+          {state.photoCreated ? 'Photo Project Created' : 'Create Photo Project'}
+        </Button>
         
-        {!state.videoCreated && (
-          <Button
-            onClick={handleCreateVideo}
-            disabled={!state.isGeneralValid || state.isCreatingVideo}
-            className="flex-1"
-            variant="outline"
-          >
-            {state.isCreatingVideo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <Video className="mr-2 h-4 w-4" />
-            Create Video Project
-          </Button>
-        )}
+        <Button
+          onClick={handleCreateVideo}
+          disabled={!state.isGeneralValid || state.isCreatingVideo || state.videoCreated}
+          className="flex-1"
+          variant="outline"
+        >
+          {state.isCreatingVideo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Video className="mr-2 h-4 w-4" />
+          {state.videoCreated ? 'Video Project Created' : 'Create Video Project'}
+        </Button>
       </div>
     </div>
   );
@@ -429,6 +425,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
           <Input
             value={photoData.shootingStyle || ''}
             onChange={(e) => setPhotoData(prev => ({ ...prev, shootingStyle: e.target.value }))}
+            onBlur={() => toast.success('Photo data saved!')}
             placeholder="e.g. Documentary, Portrait"
           />
         </div>
@@ -438,6 +435,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
           <Input
             value={photoData.editingStyle || ''}
             onChange={(e) => setPhotoData(prev => ({ ...prev, editingStyle: e.target.value }))}
+            onBlur={() => toast.success('Photo data saved!')}
             placeholder="e.g. Natural, Cinematic"
           />
         </div>
@@ -457,6 +455,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
         <Textarea
           value={photoData.notes || ''}
           onChange={(e) => setPhotoData(prev => ({ ...prev, notes: e.target.value }))}
+          onBlur={() => toast.success('Photo data saved!')}
           placeholder="Additional notes for photo project..."
           rows={3}
         />
@@ -527,6 +526,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
           <Input
             value={videoData.shootingStyle || ''}
             onChange={(e) => setVideoData(prev => ({ ...prev, shootingStyle: e.target.value }))}
+            onBlur={() => toast.success('Video data saved!')}
             placeholder="e.g. Cinematic, Documentary"
           />
         </div>
@@ -583,8 +583,8 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
               />
             </PopoverContent>
           </Popover>
-        </div>
-      </div>
+            </div>
+          </div>
 
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
@@ -605,6 +605,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
               max="10"
               value={videoData.multiCamCount || ''}
               onChange={(e) => setVideoData(prev => ({ ...prev, multiCamCount: parseInt(e.target.value) || undefined }))}
+              onBlur={() => toast.success('Video data saved!')}
               placeholder="Enter number of cameras"
             />
           </div>
@@ -616,6 +617,7 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
         <Textarea
           value={videoData.notes || ''}
           onChange={(e) => setVideoData(prev => ({ ...prev, notes: e.target.value }))}
+          onBlur={() => toast.success('Video data saved!')}
           placeholder="Additional notes for video project..."
           rows={3}
         />
@@ -626,11 +628,11 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
   const showTabs = state.photoCreated || state.videoCreated;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-        </DialogHeader>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="w-[600px] sm:w-[700px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Create New Project</SheetTitle>
+        </SheetHeader>
         
         {!showTabs ? (
           renderGeneralInfo()
@@ -665,47 +667,12 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
           </Tabs>
         )}
 
-        <div className="flex justify-between items-center pt-4 border-t">
-          <div className="flex gap-2">
-            {showTabs && !state.photoCreated && (
-              <Button
-                onClick={handleCreatePhoto}
-                disabled={!state.isGeneralValid || state.isCreatingPhoto}
-                variant="outline"
-                size="sm"
-              >
-                {state.isCreatingPhoto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Camera className="mr-2 h-4 w-4" />
-                Add Photo
-              </Button>
-            )}
-            
-            {showTabs && !state.videoCreated && (
-              <Button
-                onClick={handleCreateVideo}
-                disabled={!state.isGeneralValid || state.isCreatingVideo}
-                variant="outline"
-                size="sm"
-              >
-                {state.isCreatingVideo && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Video className="mr-2 h-4 w-4" />
-                Add Video
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              {showTabs ? 'Close' : 'Cancel'}
-            </Button>
-            {showTabs && (
-              <Button onClick={() => toast.success('Project data saved!')}>
-                Save Changes
-              </Button>
-            )}
-          </div>
+        <div className="flex justify-end pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>
+            {showTabs ? 'Close' : 'Cancel'}
+          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
