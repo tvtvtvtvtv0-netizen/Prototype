@@ -629,45 +629,45 @@ export function AddProjectModal({ isOpen, onClose, onAddProject }: AddProjectMod
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[600px] sm:w-[700px] overflow-y-auto">
-        <SheetHeader>
+      <SheetContent className="w-[800px] sm:w-[960px] max-w-none overflow-y-auto p-0">
+        <SheetHeader className="p-6">
           <SheetTitle>Create New Project</SheetTitle>
         </SheetHeader>
-        
-        {!showTabs ? (
-          renderGeneralInfo()
-        ) : (
-          <Tabs value={state.activeTab || undefined} onValueChange={(value) => setState(prev => ({ ...prev, activeTab: value as any }))}>
-            <TabsList className="grid w-full grid-cols-2">
+        <div className="p-6 space-y-6">
+          {!showTabs ? (
+            renderGeneralInfo()
+          ) : (
+            <Tabs value={state.activeTab || undefined} onValueChange={(value) => setState(prev => ({ ...prev, activeTab: value as any }))}>
+              <TabsList className="grid w-full grid-cols-2">
+                {state.photoCreated && (
+                  <TabsTrigger value="photo" className="flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Photo
+                  </TabsTrigger>
+                )}
+                {state.videoCreated && (
+                  <TabsTrigger value="video" className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Video
+                  </TabsTrigger>
+                )}
+              </TabsList>
+              
               {state.photoCreated && (
-                <TabsTrigger value="photo" className="flex items-center gap-2">
-                  <Camera className="h-4 w-4" />
-                  Photo
-                </TabsTrigger>
+                <TabsContent value="photo" className="mt-6">
+                  {renderPhotoCard()}
+                </TabsContent>
               )}
+              
               {state.videoCreated && (
-                <TabsTrigger value="video" className="flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Video
-                </TabsTrigger>
+                <TabsContent value="video" className="mt-6">
+                  {renderVideoCard()}
+                </TabsContent>
               )}
-            </TabsList>
-            
-            {state.photoCreated && (
-              <TabsContent value="photo" className="mt-6">
-                {renderPhotoCard()}
-              </TabsContent>
-            )}
-            
-            {state.videoCreated && (
-              <TabsContent value="video" className="mt-6">
-                {renderVideoCard()}
-              </TabsContent>
-            )}
-          </Tabs>
-        )}
-
-        <div className="flex justify-end pt-4 border-t">
+            </Tabs>
+          )}
+        </div>
+        <div className="flex justify-end pt-4 border-t p-6 sticky bottom-0 bg-background">
           <Button variant="outline" onClick={onClose}>
             {showTabs ? 'Close' : 'Cancel'}
           </Button>

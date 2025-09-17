@@ -1170,25 +1170,27 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       </div>
 
       {/* Kanban Board */}
-      <div className="flex space-x-6 overflow-x-auto pb-4 hide-horizontal-scrollbar">
-        {columns.map((column, index) => {
-          const filteredProjects = filterProjects(column.projects);
-          
-          return (
-            <DroppableColumn
-              key={column.id}
-              column={column}
-              index={index}
-              moveProject={moveProject}
-              setSelectedProject={setSelectedProject}
-              setSelectedTab={setSelectedTab}
-              setIsDetailPanelOpen={setIsDetailPanelOpen}
-              updateProjectPriority={updateProjectPriority}
-              updateColumnDisplaySettings={updateColumnDisplaySettings}
-              filteredProjects={filteredProjects}
-            />
-          );
-        })}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex space-x-6 overflow-x-auto pb-4">
+          {columns.map((column, index) => {
+            const filteredProjects = filterProjects(column.projects);
+            
+            return (
+              <DroppableColumn
+                key={column.id}
+                column={column}
+                index={index}
+                moveProject={moveProject}
+                setSelectedProject={setSelectedProject}
+                setSelectedTab={setSelectedTab}
+                setIsDetailPanelOpen={setIsDetailPanelOpen}
+                updateProjectPriority={updateProjectPriority}
+                updateColumnDisplaySettings={updateColumnDisplaySettings}
+                filteredProjects={filteredProjects}
+              />
+            );
+          })}
+        </div>
       </div>
     </DndProvider>
   );
